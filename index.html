@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RP Name Checker</title>
+<style>
+:root{--bg:#f4effa;--card:#fff;--text:#1d1233;--muted:#6b5f85;--line:#d9cdee;--accent:#c2185b;--accent2:#0a8ea0;--yes:#0f8a4b;--yesbg:#e3f6ec;--no:#c4264a;--nobg:#fde7ec;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0618;--card:#150c2e;--text:#f3eaff;--muted:#a597c7;--line:#2f1f58;--accent:#ff5fa2;--accent2:#5ef2ff;--yes:#4dffa6;--yesbg:#0c2a22;--no:#ff6b8b;--nobg:#2e0f1d}}
+:root[data-theme="dark"]{--bg:#0a0618;--card:#150c2e;--text:#f3eaff;--muted:#a597c7;--line:#2f1f58;--accent:#ff5fa2;--accent2:#5ef2ff;--yes:#4dffa6;--yesbg:#0c2a22;--no:#ff6b8b;--nobg:#2e0f1d}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:28px 16px}
+main{width:100%;max-width:460px}
+h1{font-family:Impact,"Arial Black",system-ui,sans-serif;font-size:2.1rem;letter-spacing:.06em;margin:0 0 4px;text-align:center;color:var(--accent)}
+h1 span{color:var(--accent2)}
+.sub{text-align:center;color:var(--muted);margin:0 0 22px;font-size:.95rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+label{display:block;font-weight:600;margin-bottom:8px}
+input{width:100%;font-size:1.15rem;padding:14px;border-radius:12px;border:2px solid var(--line);background:transparent;color:var(--text);outline:none}
+input:focus{border-color:var(--accent2)}
+button.go{width:100%;margin-top:12px;padding:14px;font-size:1.05rem;font-weight:700;border:0;border-radius:12px;background:var(--accent);color:#fff;cursor:pointer}
+button.go:active{transform:scale(.98)}
+.hint{color:var(--muted);font-size:.85rem;margin-top:8px}
+#out{margin-top:18px;display:none;border-radius:16px;padding:20px;text-align:center}
+#out.yes{display:block;background:var(--yesbg);border:2px solid var(--yes)}
+#out.no{display:block;background:var(--nobg);border:2px solid var(--no)}
+.verdict{font-family:Impact,"Arial Black",system-ui,sans-serif;font-size:3.2rem;letter-spacing:.08em;line-height:1}
+.yes .verdict{color:var(--yes)}.no .verdict{color:var(--no)}
+.nm{margin:8px 0 0;font-weight:600;word-break:break-all}
+ul{text-align:left;margin:14px 0 0;padding-left:20px;font-size:.92rem}
+li{margin:5px 0}
+details{margin-top:18px;color:var(--muted);font-size:.9rem}
+summary{cursor:pointer;font-weight:600;color:var(--text)}
+details ul{margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+<h1>RP NAME <span>CHECK</span></h1>
+<p class="sub">Type your character name to see if it passes.</p>
+<div class="card">
+<label for="n">Character name</label>
+<input id="n" type="text" placeholder="Firstname_Lastname" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="40">
+<button class="go" id="b" type="button">Check name</button>
+<div class="hint">Example format: James_Walker</div>
+<div id="out" aria-live="polite"><div class="verdict" id="v"></div><p class="nm" id="nm"></p><ul id="why"></ul></div>
+<details><summary>Rules used</summary>
+<ul>
+<li>Format: Firstname_Lastname (one underscore)</li>
+<li>English letters only, no numbers or symbols</li>
+<li>Each name starts with a capital, rest lowercase</li>
+<li>Each name is 3 to 15 letters and has a vowel</li>
+<li>No letter three times in a row</li>
+<li>First and last name can’t be identical</li>
+<li>No offensive words, staff titles, or famous/fictional names</li>
+</ul>
+<p>These are common RP server rules. Your server’s own rules may differ.</p></details>
+</div>
+</main>
+<script>
+var BAD=["fuck","shit","bitch","dick","cock","pussy","cunt","whore","slut","porn","sex","nazi","hitler","rape","penis","vagina","asshole","bastard","nigg","fag","admin","moderator","gamemaster","support","owner","staff"];
+var FAMOUS=["michael_jackson","donald_trump","joe_biden","barack_obama","elon_musk","bill_gates","mark_zuckerberg","kim_kardashian","kanye_west","justin_bieber","taylor_swift","lionel_messi","cristiano_ronaldo","tony_stark","bruce_wayne","peter_parker","clark_kent","walter_white","jack_sparrow","harry_potter","john_wick","tommy_shelby","tony_montana","vito_corleone","michael_scott","carl_johnson","franklin_clinton","trevor_philips","michael_townley","niko_bellic","tommy_vercetti","claude_speed"];
+function check(raw){
+var name=raw.trim(),issues=[];
+if(!name)return null;
+if(!/^[A-Za-z_]+$/.test(name))issues.push("Only English letters and one underscore are allowed (no numbers, spaces or symbols).");
+var parts=name.split("_");
+if(parts.length!==2||!parts[0]||!parts[1])issues.push("Use the format Firstname_Lastname with exactly one underscore.");
+var labels=["First name","Last name"];
+parts.forEach(function(p,i){
+if(!p||!/^[A-Za-z]+$/.test(p)||i>1)return;
+var L=labels[i];
+if(p!==p.charAt(0).toUpperCase()+p.slice(1).toLowerCase())issues.push(L+" must start with a capital letter and the rest lowercase.");
+if(p.length<3||p.length>15)issues.push(L+" must be between 3 and 15 letters.");
+if(!/[aeiouy]/i.test(p))issues.push(L+" doesn’t look like a real name (no vowel).");
+if(/(.)\1\1/i.test(p))issues.push(L+" has the same letter three times in a row.");
+});
+if(parts.length===2&&parts[0]&&parts[0].toLowerCase()===parts[1].toLowerCase())issues.push("First and last name can’t be the same.");
+var flat=name.toLowerCase().replace(/_/g,"");
+var hit=BAD.filter(function(w){return flat.indexOf(w)!==-1});
+if(hit.length)issues.push("Contains a word that isn’t allowed in names.");
+if(FAMOUS.indexOf(name.toLowerCase())!==-1)issues.push("This is a famous or fictional character name.");
+return{name:name,issues:issues};
+}
+var inp=document.getElementById("n"),out=document.getElementById("out");
+function run(){
+var r=check(inp.value);
+if(!r){out.className="";inp.focus();return}
+var ok=r.issues.length===0;
+out.className=ok?"yes":"no";
+document.getElementById("v").textContent=ok?"YES":"NO";
+document.getElementById("nm").textContent=ok?r.name+" is approved":r.name+" is not allowed";
+var ul=document.getElementById("why");ul.innerHTML="";
+r.issues.forEach(function(t){var li=document.createElement("li");li.textContent=t;ul.appendChild(li)});
+}
+document.getElementById("b").addEventListener("click",run);
+inp.addEventListener("keydown",function(e){if(e.key==="Enter")run()});
+inp.addEventListener("input",function(){out.className=""});
+</script>
+</body>
+</html># index.html
+Checks if a name is rp or nrp
